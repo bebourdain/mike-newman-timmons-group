@@ -12,12 +12,13 @@ export function demoConfiguration() {
   return { email, digest, expiresAt, secret };
 }
 
-export async function verifyDemoAccess(code: string) {
+export async function verifyDemoAccess(email: string, code: string) {
   const config = demoConfiguration();
   if (!config) return null;
   const candidate = createHmac("sha256", config.secret)
     .update(JSON.stringify([config.email, config.expiresAt.toISOString(), code])).digest();
-  const matches = /^\d{6}$/.test(code)
+  const matches = email.trim().toLowerCase() === config.email
+    && /^\d{6}$/.test(code)
     && timingSafeEqual(candidate, Buffer.from(config.digest, "hex"));
   // One lock per credential serializes guesses across processes and browsers.
   return prismadb.$transaction(async (tx) => {

@@ -8,10 +8,10 @@ export const demoAccess = () => ({
   endpoints: {
     signInDemo: createAuthEndpoint("/sign-in/demo", {
       method: "POST",
-      body: z.object({ code: z.string().max(64) }),
+      body: z.object({ email: z.string().trim().email().max(254), code: z.string().max(64) }),
     }, async (ctx) => {
-      const access = await verifyDemoAccess(ctx.body.code);
-      if (!access) throw ctx.error("UNAUTHORIZED", { message: "Demo access is unavailable or the code is invalid." });
+      const access = await verifyDemoAccess(ctx.body.email, ctx.body.code);
+      if (!access) throw ctx.error("UNAUTHORIZED", { message: "Demo access is unavailable or the email and code do not match." });
       const user = await ctx.context.internalAdapter.findUserById(access.userId);
       if (!user || access.expiresAt.getTime() <= Date.now()) {
         throw ctx.error("UNAUTHORIZED", { message: "Demo access is unavailable or the code is invalid." });

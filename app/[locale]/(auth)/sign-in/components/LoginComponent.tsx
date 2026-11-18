@@ -21,6 +21,10 @@ export function LoginComponent({ demoEnabled = false, googleEnabled = false }: {
 
   const signInDemo = async () => {
     if (isLoading) return;
+    if (!email.trim()) {
+      setDemoError("Enter the email address associated with your demo access.");
+      return;
+    }
     if (!/^\d{6}$/.test(demoCode)) {
       setDemoError("Enter the six-digit demo code shared with you.");
       return;
@@ -31,12 +35,12 @@ export function LoginComponent({ demoEnabled = false, googleEnabled = false }: {
       const response = await fetch("/api/auth/sign-in/demo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: demoCode }),
+        body: JSON.stringify({ email: email.trim(), code: demoCode }),
       });
       if (!response.ok) {
         setDemoError(response.status === 429
           ? "Too many attempts. Please wait before trying again."
-          : "We couldn't open the demo. Check your code or ask the person who shared it for a new one.");
+          : "We couldn't open the demo. Check your email and code, or ask the person who shared them for help.");
         return;
       }
       window.location.href = "/";
@@ -112,20 +116,22 @@ export function LoginComponent({ demoEnabled = false, googleEnabled = false }: {
   return (
     <Card variant="outlined" sx={{ my: 2, width: "100%", maxWidth: 560 }}>
       <CardHeader sx={{ pb: 1 }} title={<Typography component="h2" variant="h5" sx={{ fontWeight: 700 }}>{showDemo ? "Demo access" : step === "otp" ? "Check your email" : "Sign in"}</Typography>}
-        subheader={showDemo ? "Enter the code shared with you to explore the workspace." : step === "otp" ? "Use the verification code we sent you." : "We'll send a verification code to your email."} />
+        subheader={showDemo ? "Enter your email and the demo code shared with you." : step === "otp" ? "Use the verification code we sent you." : "We'll send a verification code to your email."} />
       <CardContent>
         <Stack spacing={2.5}>
           {showDemo ? <Box component="form" aria-busy={isLoading} onSubmit={(event) => { event.preventDefault(); void signInDemo(); }}>
             <Stack spacing={2}>
               {demoError && <Alert severity="error" role="alert">{demoError}</Alert>}
-              <TextField fullWidth autoFocus label="6-digit demo code" type={showCode ? "text" : "password"} value={demoCode}
+              <TextField fullWidth autoFocus id="demo-email" type="email" label="Email" placeholder="name@company.com" value={email}
+                onChange={event => { setEmail(event.target.value); setDemoError(null); }} disabled={isLoading} autoComplete="email" required />
+              <TextField fullWidth label="6-digit demo code" type={showCode ? "text" : "password"} value={demoCode}
                 onChange={(event) => { setDemoCode(event.target.value.replace(/\D/g, "").slice(0, 6)); setDemoError(null); }}
-                error={!!demoError} disabled={isLoading} autoComplete="off" helperText="Use your shared demo code. No email required."
+                error={!!demoError} disabled={isLoading} autoComplete="off" helperText="Use the demo code provided with your invitation."
                 slotProps={{ htmlInput: { inputMode: "numeric", pattern: "[0-9]{6}", maxLength: 6 }, input: { endAdornment:
                   <IconButton edge="end" type="button" disabled={isLoading} aria-label={showCode ? "Hide demo code" : "Show demo code"}
                     aria-pressed={showCode} onClick={() => setShowCode(value => !value)}>{showCode ? <EyeOff size={18} /> : <Eye size={18} />}</IconButton>
                 } }} sx={{ "& input": { fontSize: 24, letterSpacing: "0.3em", textAlign: "center" } }} required />
-              <Button fullWidth size="large" type="submit" variant="contained" disabled={isLoading || demoCode.length !== 6}
+              <Button fullWidth size="large" type="submit" variant="contained" disabled={isLoading || !email.trim() || demoCode.length !== 6}
                 startIcon={isLoading ? <CircularProgress size={18} color="inherit" /> : undefined}>
                 {isLoading ? "Opening demo…" : "Open demo"}
               </Button>
