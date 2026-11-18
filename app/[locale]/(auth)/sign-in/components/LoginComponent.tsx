@@ -3,21 +3,29 @@
 import React, { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Icons } from "@/components/ui/icons";
-import { Box, Button, Card, CardContent, CardHeader, Divider, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Card, CardContent, CardHeader, CircularProgress, Divider, IconButton, Stack, TextField, Typography } from "@mui/material";
 import { toast } from "sonner";
-import { MailIcon } from "lucide-react";
+import { Eye, EyeOff, MailIcon } from "lucide-react";
 
 type Step = "email" | "otp";
 
-export function LoginComponent({ demoEnabled = false }: { demoEnabled?: boolean }) {
+export function LoginComponent({ demoEnabled = false, googleEnabled = false }: { demoEnabled?: boolean; googleEnabled?: boolean }) {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [demoCode, setDemoCode] = useState("");
-  const [showDemo, setShowDemo] = useState(false);
+  const [showDemo, setShowDemo] = useState(demoEnabled);
+  const [showCode, setShowCode] = useState(false);
+  const [demoError, setDemoError] = useState<string | null>(null);
 
   const signInDemo = async () => {
+    if (isLoading) return;
+    if (!/^\d{6}$/.test(demoCode)) {
+      setDemoError("Enter the six-digit demo code shared with you.");
+      return;
+    }
+    setDemoError(null);
     setIsLoading(true);
     try {
       const response = await fetch("/api/auth/sign-in/demo", {
@@ -26,12 +34,14 @@ export function LoginComponent({ demoEnabled = false }: { demoEnabled?: boolean 
         body: JSON.stringify({ code: demoCode }),
       });
       if (!response.ok) {
-        toast.error("Demo access is unavailable or the code is invalid.");
+        setDemoError(response.status === 429
+          ? "Too many attempts. Please wait before trying again."
+          : "We couldn't open the demo. Check your code or ask the person who shared it for a new one.");
         return;
       }
       window.location.href = "/";
     } catch {
-      toast.error("Unable to sign in. Try again.");
+      setDemoError("We couldn't connect. Check your connection and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -101,23 +111,31 @@ export function LoginComponent({ demoEnabled = false }: { demoEnabled?: boolean 
 
   return (
     <Card variant="outlined" sx={{ my: 2, width: "100%", maxWidth: 560 }}>
-      <CardHeader title={<Typography variant="h5" sx={{ fontWeight: 700 }}>Login</Typography>} subheader="Choose your sign-in method" />
+      <CardHeader sx={{ pb: 1 }} title={<Typography component="h2" variant="h5" sx={{ fontWeight: 700 }}>{showDemo ? "Demo access" : step === "otp" ? "Check your email" : "Sign in"}</Typography>}
+        subheader={showDemo ? "Enter the code shared with you to explore the workspace." : step === "otp" ? "Use the verification code we sent you." : "We'll send a verification code to your email."} />
       <CardContent>
         <Stack spacing={2.5}>
-          {demoEnabled && <Button fullWidth variant="outlined" onClick={() => setShowDemo(!showDemo)} disabled={isLoading}>
-            {showDemo ? "Use email or Google" : "Use demo code"}
-          </Button>}
-          {demoEnabled && showDemo && <Box component="form" onSubmit={(event) => { event.preventDefault(); void signInDemo(); }}>
-            <Stack spacing={1.5}>
-              <TextField fullWidth label="Demo access code" type="password" value={demoCode}
-                onChange={(event) => setDemoCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
-                disabled={isLoading} autoComplete="off"
-                slotProps={{ htmlInput: { inputMode: "numeric", pattern: "[0-9]{6}", maxLength: 6 } }} required />
-              <Button fullWidth type="submit" variant="contained" disabled={isLoading || demoCode.length !== 6}>Enter demo</Button>
+          {showDemo ? <Box component="form" aria-busy={isLoading} onSubmit={(event) => { event.preventDefault(); void signInDemo(); }}>
+            <Stack spacing={2}>
+              {demoError && <Alert severity="error" role="alert">{demoError}</Alert>}
+              <TextField fullWidth autoFocus label="6-digit demo code" type={showCode ? "text" : "password"} value={demoCode}
+                onChange={(event) => { setDemoCode(event.target.value.replace(/\D/g, "").slice(0, 6)); setDemoError(null); }}
+                error={!!demoError} disabled={isLoading} autoComplete="off" helperText="Use your shared demo code. No email required."
+                slotProps={{ htmlInput: { inputMode: "numeric", pattern: "[0-9]{6}", maxLength: 6 }, input: { endAdornment:
+                  <IconButton edge="end" type="button" disabled={isLoading} aria-label={showCode ? "Hide demo code" : "Show demo code"}
+                    aria-pressed={showCode} onClick={() => setShowCode(value => !value)}>{showCode ? <EyeOff size={18} /> : <Eye size={18} />}</IconButton>
+                } }} sx={{ "& input": { fontSize: 24, letterSpacing: "0.3em", textAlign: "center" } }} required />
+              <Button fullWidth size="large" type="submit" variant="contained" disabled={isLoading || demoCode.length !== 6}
+                startIcon={isLoading ? <CircularProgress size={18} color="inherit" /> : undefined}>
+                {isLoading ? "Opening demo…" : "Open demo"}
+              </Button>
+              <Button fullWidth type="button" size="small" onClick={() => { setShowDemo(false); setDemoError(null); }} disabled={isLoading}>Sign in with email instead</Button>
             </Stack>
-          </Box>}
-          <Button fullWidth variant="outlined" onClick={loginWithGoogle} disabled={isLoading} startIcon={<Icons.google style={{ width: 16, height: 16 }} />}>Continue with Google</Button>
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><Divider sx={{ flex: 1 }} /><Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase" }}>Or continue with email</Typography><Divider sx={{ flex: 1 }} /></Stack>
+          </Box> : <>
+          {googleEnabled && <>
+            <Button fullWidth variant="outlined" onClick={loginWithGoogle} disabled={isLoading} startIcon={<Icons.google style={{ width: 16, height: 16 }} />}>Continue with Google</Button>
+            <Divider><Typography variant="caption" color="text.secondary">or use email</Typography></Divider>
+          </>}
           {step === "email" && <Box component="form" onSubmit={(event) => { event.preventDefault(); void sendOtp(); }}>
             <Stack spacing={1.5}>
               <TextField fullWidth id="email" type="email" label="Email" placeholder="name@domain.com" value={email} onChange={(event) => setEmail(event.target.value)} disabled={isLoading} autoComplete="email" required />
@@ -132,6 +150,8 @@ export function LoginComponent({ demoEnabled = false }: { demoEnabled?: boolean 
               <Button fullWidth size="small" onClick={() => { setStep("email"); setOtp(""); }} disabled={isLoading}>Use a different email</Button>
             </Stack>
           </Box>}
+          {demoEnabled && <Button fullWidth size="small" onClick={() => setShowDemo(true)} disabled={isLoading}>Use a demo code instead</Button>}
+          </>}
         </Stack>
       </CardContent>
     </Card>
