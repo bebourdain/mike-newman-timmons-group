@@ -8,6 +8,13 @@ const withNextIntl = require("next-intl/plugin")(
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
+  experimental: {
+    webpackMemoryOptimizations: true,
+    ...(process.env.VERCEL === "1" ? { cpus: 1 } : {}),
+  },
+  // build-next.cjs sets this only after route type generation and tsc succeed.
+  // Standalone next builds still run Next's normal type check.
+  typescript: { ignoreBuildErrors: process.env.NEXTCRM_TYPES_CHECKED === "1" },
   serverExternalPackages: ["pdf-parse", "pdfjs-dist"],
   images: {
     remotePatterns: [
