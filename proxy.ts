@@ -41,9 +41,9 @@ export async function proxy(req: NextRequest) {
   // Non-API routes — redirect to sign-in if no session cookie
   if (!path.startsWith("/api")) {
     if (!sessionCookie) {
-      // Allow auth pages (sign-in, register, pending, inactive)
-      const authPaths = ["/sign-in", "/register", "/pending", "/inactive"];
-      const isAuthPage = authPaths.some((p) => path.includes(p));
+      // Allow regular and demo authentication pages.
+      const authPaths = ["/sign-in", "/demo", "/register", "/pending", "/inactive"];
+      const isAuthPage = authPaths.some((p) => path === p || path.endsWith(p));
       if (!isAuthPage) {
         return NextResponse.redirect(new URL("/sign-in", req.nextUrl));
       }
