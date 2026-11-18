@@ -15,7 +15,7 @@ export function LoginComponent({ demoEnabled = false, googleEnabled = false }: {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [demoCode, setDemoCode] = useState("");
-  const [showDemo, setShowDemo] = useState(demoEnabled);
+  const [showDemo, setShowDemo] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
 
@@ -135,7 +135,7 @@ export function LoginComponent({ demoEnabled = false, googleEnabled = false }: {
                 startIcon={isLoading ? <CircularProgress size={18} color="inherit" /> : undefined}>
                 {isLoading ? "Opening demo…" : "Open demo"}
               </Button>
-              <Button fullWidth type="button" size="small" onClick={() => { setShowDemo(false); setDemoError(null); }} disabled={isLoading}>Email me a sign-in code instead</Button>
+              <Button fullWidth type="button" size="small" onClick={() => { setShowDemo(false); setDemoError(null); setDemoCode(""); setShowCode(false); }} disabled={isLoading}>Back to sign in</Button>
             </Stack>
           </Box> : <>
           {googleEnabled && <>
@@ -156,7 +156,7 @@ export function LoginComponent({ demoEnabled = false, googleEnabled = false }: {
               <Button fullWidth size="small" onClick={() => { setStep("email"); setOtp(""); }} disabled={isLoading}>Use a different email</Button>
             </Stack>
           </Box>}
-          {demoEnabled && <Button fullWidth size="small" onClick={() => setShowDemo(true)} disabled={isLoading}>Use a demo code instead</Button>}
+          {demoEnabled && <Button fullWidth variant="outlined" onClick={() => { setShowDemo(true); setDemoError(null); }} disabled={isLoading}>Use demo code</Button>}
           </>}
         </Stack>
       </CardContent>
