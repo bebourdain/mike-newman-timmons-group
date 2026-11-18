@@ -38,7 +38,9 @@ export function LoginComponent({ demoEnabled = false, googleEnabled = false, ini
         body: JSON.stringify({ email: email.trim(), code: demoCode }),
       });
       if (!response.ok) {
-        setDemoError(response.status === 429
+        setDemoError(response.status >= 500
+          ? "The demo service couldn't connect. Please try again in a moment."
+          : response.status === 429
           ? "Too many attempts. Please wait before trying again."
           : "We couldn't open the demo. Check your email and code, or ask the person who shared them for help.");
         return;

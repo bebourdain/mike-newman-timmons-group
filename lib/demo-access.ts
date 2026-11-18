@@ -40,5 +40,5 @@ export async function verifyDemoAccess(email: string, code: string) {
     if (!user || user.userStatus !== "ACTIVE"
       || (user.banned && (!user.banExpires || user.banExpires.getTime() > Date.now()))) return null;
     return { userId: user.id, expiresAt: config.expiresAt };
-  });
+  }, { maxWait: 15_000, timeout: 15_000 });
 }
