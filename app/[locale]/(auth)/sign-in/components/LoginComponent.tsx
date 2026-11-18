@@ -4,9 +4,10 @@ import React, { useState } from "react";
 import { useLocale } from "next-intl";
 import { authClient } from "@/lib/auth-client";
 import { Icons } from "@/components/ui/icons";
-import { Alert, Box, Button, Card, CardContent, CardHeader, CircularProgress, Divider, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Card, CardContent, CardHeader, CircularProgress, Divider, Stack, TextField, Typography } from "@mui/material";
 import { toast } from "sonner";
-import { Eye, EyeOff, MailIcon } from "lucide-react";
+import { MailIcon } from "lucide-react";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 type Step = "email" | "otp";
 
@@ -18,7 +19,6 @@ export function LoginComponent({ demoEnabled = false, googleEnabled = false, ini
   const [otp, setOtp] = useState("");
   const [demoCode, setDemoCode] = useState(initialDemoCode);
   const [showDemo, setShowDemo] = useState(initialDemo && demoEnabled);
-  const [showCode, setShowCode] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
 
   const signInDemo = async () => {
@@ -128,18 +128,23 @@ export function LoginComponent({ demoEnabled = false, googleEnabled = false, ini
               {demoError && <Alert severity="error" role="alert">{demoError}</Alert>}
               <TextField fullWidth autoFocus id="demo-email" type="email" label="Email" placeholder="name@company.com" value={email}
                 onChange={event => { setEmail(event.target.value); setDemoError(null); }} disabled={isLoading} autoComplete="email" required />
-              <TextField fullWidth label="6-digit demo code" type={showCode ? "text" : "password"} value={demoCode}
-                onChange={(event) => { setDemoCode(event.target.value.replace(/\D/g, "").slice(0, 6)); setDemoError(null); }}
-                error={!!demoError} disabled={isLoading} autoComplete="off" helperText="Use the demo code provided with your invitation."
-                slotProps={{ htmlInput: { inputMode: "numeric", pattern: "[0-9]{6}", maxLength: 6 }, input: { endAdornment:
-                  <IconButton edge="end" type="button" disabled={isLoading} aria-label={showCode ? "Hide demo code" : "Show demo code"}
-                    aria-pressed={showCode} onClick={() => setShowCode(value => !value)}>{showCode ? <EyeOff size={18} /> : <Eye size={18} />}</IconButton>
-                } }} sx={{ "& input": { fontSize: 24, letterSpacing: "0.3em", textAlign: "center" } }} required />
+              <Box>
+                <Typography component="label" htmlFor="demo-code" variant="body2" sx={{ display: "block", mb: 1 }}>6-digit demo code *</Typography>
+                <InputOTP id="demo-code" aria-label="6-digit demo code" aria-describedby="demo-code-help" aria-invalid={!!demoError}
+                  maxLength={6} inputMode="numeric" pattern="^[0-9]*$" autoComplete="one-time-code" required disabled={isLoading}
+                  value={demoCode} onChange={value => { setDemoCode(value); setDemoError(null); }}
+                  pasteTransformer={value => value.replace(/\D/g, "").slice(0, 6)}>
+                  <InputOTPGroup className="gap-2">
+                    {Array.from({ length: 6 }, (_, index) => <InputOTPSlot key={index} index={index} className="h-12 w-10 rounded-md border text-2xl first:rounded-md last:rounded-md" />)}
+                  </InputOTPGroup>
+                </InputOTP>
+                <Typography id="demo-code-help" variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>Type or paste your six-digit demo code.</Typography>
+              </Box>
               <Button fullWidth size="large" type="submit" variant="contained" disabled={isLoading || !email.trim() || demoCode.length !== 6}
                 startIcon={isLoading ? <CircularProgress size={18} color="inherit" /> : undefined}>
                 {isLoading ? "Opening demo…" : "Open demo"}
               </Button>
-              <Button fullWidth type="button" size="small" onClick={() => { setShowDemo(false); setDemoError(null); setDemoCode(""); setShowCode(false); }} disabled={isLoading}>Back to sign in</Button>
+              <Button fullWidth type="button" size="small" onClick={() => { setShowDemo(false); setDemoError(null); setDemoCode(""); }} disabled={isLoading}>Back to sign in</Button>
             </Stack>
           </Box> : <>
           {googleEnabled && <>
