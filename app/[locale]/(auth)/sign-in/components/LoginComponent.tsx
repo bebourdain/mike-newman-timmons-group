@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useLocale } from "next-intl";
 import { authClient } from "@/lib/auth-client";
 import { Icons } from "@/components/ui/icons";
 import { Alert, Box, Button, Card, CardContent, CardHeader, CircularProgress, Divider, IconButton, Stack, TextField, Typography } from "@mui/material";
@@ -10,6 +11,7 @@ import { Eye, EyeOff, MailIcon } from "lucide-react";
 type Step = "email" | "otp";
 
 export function LoginComponent({ demoEnabled = false, googleEnabled = false, initialDemo = false, initialEmail = "", initialDemoCode = "" }: { demoEnabled?: boolean; googleEnabled?: boolean; initialDemo?: boolean; initialEmail?: string; initialDemoCode?: string }) {
+  const locale = useLocale();
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState(initialEmail);
@@ -45,7 +47,7 @@ export function LoginComponent({ demoEnabled = false, googleEnabled = false, ini
           : "We couldn't open the demo. Check your email and code, or ask the person who shared them for help.");
         return;
       }
-      window.location.href = "/";
+      window.location.href = `/${locale}/projects/scanners`;
     } catch {
       setDemoError("We couldn't connect. Check your connection and try again.");
     } finally {
