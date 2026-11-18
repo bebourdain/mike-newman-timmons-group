@@ -9,12 +9,12 @@ import { Eye, EyeOff, MailIcon } from "lucide-react";
 
 type Step = "email" | "otp";
 
-export function LoginComponent({ demoEnabled = false, googleEnabled = false, initialDemo = false }: { demoEnabled?: boolean; googleEnabled?: boolean; initialDemo?: boolean }) {
+export function LoginComponent({ demoEnabled = false, googleEnabled = false, initialDemo = false, initialEmail = "", initialDemoCode = "" }: { demoEnabled?: boolean; googleEnabled?: boolean; initialDemo?: boolean; initialEmail?: string; initialDemoCode?: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<Step>("email");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail);
   const [otp, setOtp] = useState("");
-  const [demoCode, setDemoCode] = useState("");
+  const [demoCode, setDemoCode] = useState(initialDemoCode);
   const [showDemo, setShowDemo] = useState(initialDemo && demoEnabled);
   const [showCode, setShowCode] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
