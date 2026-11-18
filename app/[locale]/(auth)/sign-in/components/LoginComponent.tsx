@@ -135,7 +135,7 @@ export function LoginComponent({ demoEnabled = false, googleEnabled = false }: {
                 startIcon={isLoading ? <CircularProgress size={18} color="inherit" /> : undefined}>
                 {isLoading ? "Opening demo…" : "Open demo"}
               </Button>
-              <Button fullWidth type="button" size="small" onClick={() => { setShowDemo(false); setDemoError(null); }} disabled={isLoading}>Sign in with email instead</Button>
+              <Button fullWidth type="button" size="small" onClick={() => { setShowDemo(false); setDemoError(null); }} disabled={isLoading}>Email me a sign-in code instead</Button>
             </Stack>
           </Box> : <>
           {googleEnabled && <>
